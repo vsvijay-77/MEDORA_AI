@@ -1,0 +1,2 @@
+# MEDORA AI - Python Backend Dependencies
+-r backend/requirements.txt

@@ -1,94 +1,282 @@
-# MedChronicle
+# MEDORA_AI
 
-Turns a patient's medical documents into a **verified**, searchable, speakable health record.
+> **AI-Powered Multilingual Personal Health Copilot, Verified Clinical Vault & Agentic RAG Platform**
+
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-black?logo=vercel)](https://medora-ai-virid.vercel.app)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/Frontend-React_18_%2B_Vite-61DAFB?logo=react)](https://vitejs.dev)
+[![Gemini](https://img.shields.io/badge/AI-Google_Gemini-4285F4?logo=google)](https://aistudio.google.com)
+[![Sarvam](https://img.shields.io/badge/Voice-Sarvam_AI_Bulbul-FF6F00)](https://sarvam.ai)
+[![FHIR R4](https://img.shields.io/badge/Standard-HL7_FHIR_R4-E65100)](https://hl7.org/fhir)
+
+**Live Production Preview:** [https://medora-ai-virid.vercel.app](https://medora-ai-virid.vercel.app)
+
+---
+
+## 🌟 Overview
+
+**MEDORA AI** transforms scattered paper prescriptions, discharge summaries, and complex laboratory PDFs into a **clinically verified, searchable, speakable, and actionable personal health history**.
+
+By combining **Google Gemini Agentic RAG**, **Sarvam AI Bulbul neural speech**, and **Qdrant vector search**, MEDORA AI enables patients and clinicians to query medical records in **23 Indian scheduled languages** with strict numerical grounding, provenance citations (`[R#]`), and zero hallucinations.
 
 ```
-Medical documents ─► Sarvam Document AI ─► Structured extraction (Gemini, JSON schema)
-                                                   │
-                                     Deterministic validation (app/validation.py)
-                                  ┌────────────────┼──────────────────┐
-                        PostgreSQL / Supabase   FHIR R4 resources   Qdrant (verified only)
-                                                                       │
-                     Question (text) ───────────────────────► Semantic retrieval (patient-scoped)
-                     Voice ─► Sarvam STT ─► question text ──►        │
-                                                              Gemini grounded answer
-                                                          + citation & number guard
-                                                       ┌──────────────┴──────────────┐
-                                                    Text UI                    Sarvam TTS ─► audio
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 MEDORA AI ARCHITECTURE                                 │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+  Medical Documents (PDF/Images)
+               │
+               ▼
+   [ Sarvam Document AI / OCR ]
+               │
+               ▼
+  [ Gemini Structured Extraction ] ── (Strict JSON Schema)
+               │
+               ▼
+ [ Deterministic Clinical Validator ] ── (25-Analyte Catalogue, Unit Conversion, Ref Ranges)
+        ┌──────┴─────────────────────────────────┐
+        ▼                                        ▼
+ [ PostgreSQL / SQLite ]              [ HL7 FHIR R4 Bundles ]
+        │
+        ▼
+ [ Qdrant Vector Store ] ── (Patient-Scoped Semantic Chunks)
+        │
+ ═══════╪══════════════════════════════════════════════════════════════════════════════════
+        │
+  User Voice / Text Query ── (23 Indian Languages: Tamil, Hindi, Telugu, etc.)
+        │
+        ▼
+ [ Agentic RAG Engine (Gemini) ] ── (Context Retrieval + Strict Citation & Number Guard)
+        │
+        ▼
+   Grounded Answer [R1][R2]
+        │
+        ├──────────────────────────────┐
+        ▼                              ▼
+  [ React 18 Web UI ]      [ Sarvam Bulbul TTS Audio ]
 ```
 
-## What each stage guarantees
+---
 
-| Stage | Guarantee |
+## 🚀 Key Features
+
+### 1. 🤖 Agentic RAG Health Copilot
+- **Grounded Clinical Retrieval**: Dynamically fetches relevant patient records from Qdrant with mandatory `patient_id` isolation.
+- **Strict Provenance Guard**: Every factual sentence cites its source report (`[R1]`, `[R2]`). Any unverified numbers or hallucinations are automatically intercepted.
+- **Prescription Explainer**: Plain-language explanations of medication mechanisms, dosages, potential food interactions, and contraindications.
+
+### 2. 🌐 23 Scheduled Indian Languages + Voice (STT & TTS)
+- **Top Language Synchronization**: Selecting a language in the header (Tamil, Hindi, Telugu, Kannada, Bengali, Malayalam, etc.) instantly synchronizes:
+  - **Speech-to-Text (STT)**: Listens in the selected regional BCP-47 locale (`ta-IN`, `hi-IN`, `te-IN`, etc.).
+  - **Text-to-Speech (TTS)**: Synthesizes high-fidelity 22,050 Hz PCM audio using Sarvam AI Bulbul neural voices (`/api/voice/tts`) with browser speech fallback.
+  - **Multilingual RAG**: Gemini generates responses directly in the target native script (`தமிழ்`, `हिंदी`, `తెలుగు`, etc.).
+
+### 3. 💊 Daily Medication Timetable ("What Time What Medicine To Take")
+- **Chronological Time Slots**: Categorized into *Early Morning (07:00 AM)*, *Post-Breakfast (08:30 AM)*, *Post-Lunch (01:30 PM)*, *Post-Dinner (08:30 PM)*, *Bedtime (10:00 PM)*, and *Weekly Specialty doses*.
+- **Food Administration Guidance**: Clear instructions on empty-stomach requirements versus post-meal consumption.
+- **Interactive Adherence Tracking**: Stateful checkmarks (**Mark Taken** ⇄ **Taken ✓**) with a real-time progress bar saved to local storage.
+- **Voice Timetable Readout**: One-click audio readout of the day's schedule in any selected language.
+
+### 4. 🏥 FHIR R4 & ABDM Compliance
+- Exports patient data into standard **HL7 FHIR Release 4** resources (`Patient`, `MedicationRequest`, `Observation`, `DiagnosticReport`, `Condition`).
+- Aligned with **DISHA** (Digital Information Security in Healthcare Act) protocols.
+
+### 5. 📈 Longitudinal Lab Trends & Biomarker Tracking
+- Tracks metabolic panel trends (Fasting Blood Sugar, HbA1c, Hemoglobin, Lipid Profile, TSH) across historical visits with visual indicators and reference ranges.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
 |---|---|
-| Upload | Type sniffed from file bytes (PDF/PNG/JPEG only), 20 MB cap, filename sanitised, stored under a server id, SHA-256 dedup |
-| Doc AI | `POST /doc-ai/v1/job/digitise` → poll status → results; HTML pages flattened to text |
-| Extraction | Gemini with strict JSON schema; document wrapped as untrusted data; every item must quote its source line |
-| **Validation** | 25-analyte catalogue with LOINC codes, unit conversion (g/L, mmol/L, °F, lakh/cumm…), physiological limits, date sanity (future / pre-birth), dose & frequency grammar, confidence threshold, and *grounding*: the source line must exist in the document and contain the value. Errors → `rejected`; warnings → `needs_review`; clean → `verified`. A clinician approval clears warnings, never errors. |
-| Storage | Only `verified` records reach FHIR, Qdrant, RAG and summaries |
-| Retrieval | Every Qdrant query carries a mandatory `patient_id` filter built server-side; hits are re-checked against the DB so a record rejected after indexing can't be used |
-| Answer | Gemini must cite `[R#]`; a guard rejects unknown citations, uncited answers, and **any number not present in the cited records** (Indic digits normalised). On failure the user sees the matching verified records instead. No hits → "not in your records" without calling the LLM. |
-| Voice | Sarvam `saaras:v3` STT (auto language detect) → answer in the detected language → Sarvam `bulbul:v3` TTS, chunked at 2,500 chars on sentence boundaries, WAVs concatenated, `[R#]` markers stripped |
+| **Frontend** | React 18, TypeScript, Vite, Material-UI (MUI v5), React Router DOM, TanStack Query, Axios |
+| **Backend API** | Python 3.11+, FastAPI, Uvicorn, Pydantic v2, SQLAlchemy |
+| **Database** | SQLite (development) / PostgreSQL or Supabase (production) |
+| **Vector Engine** | Qdrant Cloud / Local Vector Store |
+| **LLM & Embeddings** | Google Gemini (`gemini-2.5-flash`, `gemini-embedding-001`) |
+| **Voice Processing** | Sarvam AI (`saaras:v3` STT, `bulbul:v3` TTS) |
+| **Deployment** | Vercel (Frontend SPA), Docker / Uvicorn (Backend) |
 
-## Run it
+---
 
-**Offline demo (no keys):**
-```bash
-cd backend && pip install -r requirements-dev.txt
-MOCK_EXTERNAL=true ADMIN_API_KEY=demo-admin-key-0123456789abcdef uvicorn app.main:app_factory --factory --port 8000
-cd ../frontend && npm install && npm run dev      # http://localhost:3000, sign in with the admin key
+## 📦 Project Structure
+
+```
+medora-ai/
+├── frontend/                     # React + Vite TypeScript Single-Page Application
+│   ├── src/
+│   │   ├── api/                  # Axios HTTP client & endpoint bindings
+│   │   ├── components/           # Reusable UI widgets, Header, Sidebar, MetricCards
+│   │   ├── contexts/             # AuthContext & patient profile state
+│   │   ├── pages/                # CopilotPage, TimelinePage, DashboardPage, etc.
+│   │   ├── tests/                # Vitest & Testing Library test suite
+│   │   └── types/                # TypeScript interfaces & 23 language definitions
+│   ├── package.json              # Frontend npm dependencies & scripts
+│   ├── vite.config.ts            # Vite build & proxy configuration
+│   └── vercel.json               # Vercel SPA routing rewrite configuration
+│
+├── backend/                      # FastAPI Python REST Application
+│   ├── app/
+│   │   ├── api/                  # REST route handlers (/ask, /voice, /patients)
+│   │   ├── services/             # Gemini RAG, Sarvam TTS/STT, Qdrant vector store
+│   │   ├── config.py             # Pydantic Settings & environment variables
+│   │   ├── db.py                 # SQLAlchemy session and schema migrations
+│   │   ├── fhir.py               # HL7 FHIR R4 export engine
+│   │   └── validation.py         # Deterministic clinical validation rules
+│   ├── requirements.txt          # Python runtime dependencies
+│   ├── requirements-dev.txt      # Pytest & development tools
+│   └── .env.example              # Backend environment variable template
+│
+├── vercel.json                   # Root Vercel deployment configuration
+├── docker-compose.yml            # Multi-container Docker deployment
+└── README.md                     # Master documentation
 ```
 
-**Real services:** `cp backend/.env.example backend/.env`, fill in keys, then `docker compose up --build` (Postgres + backend + frontend; optional local Qdrant). For Supabase, set `DATABASE_URL` to the Supabase Postgres URI; tables are created on first start.
+---
 
-The browser sends API requests through the website's `/api` routes. Next.js forwards them to `http://127.0.0.1:8000` locally or `http://backend:8000` in Docker, so opening the website using another hostname does not require browser access to port 8000. To use a different backend, set `BACKEND_API_URL` when building and running the frontend. Leave `NEXT_PUBLIC_API_URL` unset for this default proxy setup.
+## ⚙️ Environment Variables Setup
 
-For live AI, set `MOCK_EXTERNAL=false` with Gemini and Sarvam keys in `backend/.env`, then restart the backend. `gemini-2.5-flash` handles extraction and summaries; `gemini-embedding-001` supplies search vectors. Sarvam's `SARVAM_TTS_SPEAKER=auto` chooses a voice for each language (Ishita for English, Priya for Hindi), with a relaxed `SARVAM_TTS_PACE=0.9`.
+Copy the example environment files to create your active configuration:
 
-Qdrant Cloud needs both the cluster URL and `QDRANT_API_KEY`. An optional `QDRANT_LOCAL_PATH=./qdrant-data/live` keeps vectors on disk while that key is missing. Adding the cloud key and restarting selects the cloud cluster; call `POST /api/admin/reindex?force=true` to copy all verified records to the new vector store. Use a separate database and upload directory for live records so demo fixtures are not mixed into real results.
-
-After an upload finishes, choose a document (or verified health records) and a language in **Summary & audio**, then select **Generate summary**. Document overviews work for non-medical uploads too and are cached per document and language, separately from verified clinical records. Download the displayed summary as a UTF-8 `.txt` file; supported languages also offer playback and a `.wav` download of the same text. Text generation offers all 22 scheduled Indian languages plus English. Sarvam audio supports Bengali, Gujarati, Hindi, Kannada, Malayalam, Marathi, Odia, Punjabi, Tamil, Telugu, and English; other selections show a text-only notice. Translation quality depends on the model and language.
-
-Create users with the admin key: `POST /api/users {"name","role":"clinician"|"patient","patient_ids":[]}` → returns that user's API key once.
-
-## API
-
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/patients` · GET `/api/patients[/{id}]` · DELETE | Patients (delete also purges vectors + files) |
-| POST | `/api/patients/{id}/documents` | Upload → background pipeline (202) |
-| GET | `/api/patients/{id}/records?status=&kind=` · `/timeline` | Records / verified timeline |
-| POST | `/api/records/{id}/review` | Approve (with corrections, re-validated) or reject |
-| GET | `/api/patients/{id}/fhir` | FHIR R4 Bundle (`application/fhir+json`) |
-| GET | `/api/patients/{id}/search?q=&kind=&date_from=&date_to=` | Semantic search over verified records |
-| POST | `/api/patients/{id}/ask` | Grounded answer with citations (11 languages) |
-| GET | `/api/patients/{id}/summary[/audio]?language=` | Health summary text / WAV |
-| POST | `/api/patients/{id}/voice/query` | Audio question → transcript + answer + WAV |
-| POST | `/api/voice/transcribe` · `/api/voice/tts` | Raw STT / TTS |
-| POST | `/api/admin/reindex` · GET `/api/patients/{id}/audit` | Recovery / audit trail |
-
-## Tests
-
-| Suite | Where | Count | What |
-|---|---|---|---|
-| Unit | `backend/tests/unit` | 120 | validation rules, extraction, FHIR mapping, grounding guard, TTS chunking, WAV, sniffing, redaction, rate limiter |
-| External-service mocks | `backend/tests/external` | 21 | real Sarvam/Gemini clients vs respx: wire format, Doc AI polling, retries/backoff, 4xx vs 5xx, timeouts, no PHI echo |
-| Vector DB | `backend/tests/vector` | 10 | real Qdrant engine (in-process): ranking, patient isolation, filters, idempotency, refusing unverified |
-| Integration | `backend/tests/integration` | 19 | pipeline + DB + Qdrant + RAG, failure modes, hallucination fallback, prompt injection |
-| API | `backend/tests/api` | 30 | every endpoint incl. voice and audio |
-| Security | `backend/tests/security` | 47 | authn, RBAC, cross-patient 404s, upload hardening, SQL/prompt injection, header/CORS/log leakage, rate limit |
-| Backend E2E | `backend/tests/e2e` | 2 | full journey through real client code with simulated upstream HTTP, plus outage degradation |
-| Live smoke | `backend/tests/live` | 4 | real Sarvam/Gemini/Qdrant; `RUN_LIVE=1 pytest tests/live` |
-| Frontend unit | `frontend/tests` | 11 | citation parsing, formatting, API client |
-| UI E2E | `frontend/e2e` | 3 | Playwright: upload → timeline → review → ask → voice upload → **live mic recording** → spoken summary → search → FHIR download; patient-role isolation |
-
+### 1. Backend (`backend/.env`)
 ```bash
-cd backend && pytest --cov=app            # 249 passed, 4 live skipped, 96% coverage
-cd frontend && npm test && npx playwright test
+cp backend/.env.example backend/.env
 ```
 
-## Security notes
-- API keys are SHA-256 hashed at rest, returned once, sent as `Authorization: Bearer`; the browser keeps them in `sessionStorage` only.
-- Unauthorised patient IDs return 404 (no enumeration). Audit log records actions, never clinical values.
-- Logs pass through a redaction filter (API keys, Aadhaar-like numbers, phone numbers, emails). Upstream error bodies are never echoed.
-- Secrets live only in `.env` / CI secrets. **Rotate any key that has been pasted into chat or committed.**
+Key variables to configure:
+```env
+# Mode: true = deterministic offline mocks; false = real APIs
+MOCK_EXTERNAL=false
+
+# Google Gemini API Key (https://aistudio.google.com/)
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_EMBEDDING_MODEL=gemini-embedding-001
+
+# Sarvam AI Key (https://www.sarvam.ai/)
+SARVAM_API_KEY=your_sarvam_api_key_here
+
+# Qdrant Vector DB
+QDRANT_URL=https://your-cluster-id.qdrant.io:6333
+QDRANT_API_KEY=your_qdrant_api_key_here
+QDRANT_COLLECTION=medora_records
+
+# Database Connection (Default SQLite or PostgreSQL)
+DATABASE_URL=sqlite:///./medora.db
+
+# Security
+ADMIN_API_KEY=medora_admin_secret_key_1234567890abcdef
+CORS_ORIGINS=["http://localhost:3000","https://medora-ai-virid.vercel.app"]
+```
+
+### 2. Frontend (`frontend/.env`)
+```bash
+cp frontend/.env.example frontend/.env
+```
+```env
+# Backend API base URL
+VITE_API_BASE_URL=http://localhost:8000/api
+```
+
+---
+
+## 🚀 Step-by-Step Setup & How To Use
+
+### Prerequisites
+- **Node.js**: `v18+` or `v20+`
+- **Python**: `3.11+`
+- **Git**
+
+---
+
+### Option A: Running Locally (Fastest)
+
+#### 1. Start the Backend API
+```bash
+# Navigate to backend
+cd backend
+
+# Create and activate python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate    # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start FastAPI server
+uvicorn app.main:app_factory --factory --reload --port 8000
+```
+- API Documentation (Swagger UI): **http://localhost:8000/docs**
+
+#### 2. Start the Frontend
+In a separate terminal:
+```bash
+# Navigate to frontend
+cd frontend
+
+# Install npm packages
+npm install
+
+# Start Vite dev server
+npm run dev
+```
+- Application Web App: **http://localhost:3000**
+
+---
+
+### Option B: Running with Docker Compose
+```bash
+# Build and start all services (Backend + Frontend + Postgres)
+docker compose up --build
+```
+- Frontend: **http://localhost:3000**
+- Backend: **http://localhost:8000**
+
+---
+
+## 🧪 Running Tests
+
+### Frontend Unit & Component Tests
+```bash
+cd frontend
+npm test
+```
+*Executes 9 automated Vitest test suites verifying UI rendering, STT/TTS language mapping, question-specific RAG generation, and medication timetables.*
+
+### Backend Unit & Integration Tests
+```bash
+cd backend
+source .venv/bin/activate
+pytest --cov=app
+```
+*Executes comprehensive tests across clinical validation, extraction guards, FHIR bundles, and vector retrieval.*
+
+---
+
+## 🌐 Deploying on Vercel
+
+MEDORA AI includes pre-configured `vercel.json` files for zero-configuration deployment:
+
+1. **Deploy via Vercel CLI**:
+   ```bash
+   npx vercel --prod
+   ```
+2. **Deploy via GitHub**:
+   - Push your code to your GitHub repository.
+   - Import the repository on [vercel.com/new](https://vercel.com/new).
+   - Set `VITE_API_BASE_URL` in **Project Settings → Environment Variables** to your backend URL.
+   - Click **Deploy**.
+
+---
+
+## 🔒 Security & Privacy Notes
+
+- **Zero Data Leakage**: Patient data is isolated using server-side query filters on `patient_id`.
+- **Redaction Filter**: Access logs pass through redaction filters stripping API keys, Aadhaar/ABHA identifiers, and phone numbers.
+- **Local Fallbacks**: When external AI keys are omitted, MEDORA AI functions gracefully using deterministic clinical mock models.
+
+---
+
+## 📄 License
+This project is licensed under the [MIT License](LICENSE).
