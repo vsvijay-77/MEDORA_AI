@@ -401,7 +401,7 @@ Please check with your healthcare provider for specific clinical recommendations
 
       {/* Main Chat Box */}
       <Card sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <CardContent sx={{ flexGrow: 1, overflowY: 'auto', p: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+        <CardContent sx={{ flexGrow: 1, minHeight: 0, overflowY: 'auto', p: 3, display: 'flex', flexDirection: 'column', gap: 2.5 }}>
           {messages.map((msg) => {
             const isUser = msg.sender === 'user';
             return (
@@ -509,7 +509,27 @@ Please check with your healthcare provider for specific clinical recommendations
         </CardContent>
 
         {/* Quick Sample Questions */}
-        <Box sx={{ px: 2, py: 1, bgcolor: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', gap: 1, overflowX: 'auto' }}>
+        <Box
+          sx={{
+            px: 2,
+            height: 42,
+            bgcolor: '#F8FAFC',
+            borderTop: '1px solid #E2E8F0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            overflowX: 'auto',
+            flexShrink: 0,
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0, mr: 0.5 }}>
+            <AutoAwesomeRoundedIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              Suggested:
+            </Typography>
+          </Box>
           {SAMPLE_QUESTIONS.map((q, i) => (
             <Chip
               key={i}
@@ -517,7 +537,15 @@ Please check with your healthcare provider for specific clinical recommendations
               size="small"
               onClick={() => handleSend(q)}
               clickable
-              sx={{ bgcolor: '#FFFFFF', border: '1px solid #CBD5E1', fontSize: '0.75rem', flexShrink: 0 }}
+              sx={{
+                bgcolor: '#FFFFFF',
+                border: '1px solid #CBD5E1',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                flexShrink: 0,
+                height: 26,
+                '&:hover': { bgcolor: '#EFF6FF', borderColor: 'primary.main' },
+              }}
             />
           ))}
         </Box>
@@ -526,20 +554,20 @@ Please check with your healthcare provider for specific clinical recommendations
         <Box
           sx={{
             px: 2,
-            py: 0.75,
+            height: 38,
             bgcolor: isRecording ? '#FEF2F2' : '#F8FAFC',
             borderTop: '1px solid #E2E8F0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            flexWrap: 'wrap',
             gap: 1,
+            flexShrink: 0,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, overflow: 'hidden' }}>
             <Chip
               size="small"
-              icon={isRecording ? <MicRoundedIcon sx={{ color: '#DC2626 !important' }} /> : <TranslateRoundedIcon sx={{ fontSize: 15 }} />}
+              icon={isRecording ? <MicRoundedIcon sx={{ color: '#DC2626 !important' }} /> : <TranslateRoundedIcon sx={{ fontSize: 14 }} />}
               label={
                 isRecording
                   ? `Recording Voice (STT) in ${activeLang.name} (${activeLang.nativeName}) • [${speechLangCode}]`
@@ -547,21 +575,27 @@ Please check with your healthcare provider for specific clinical recommendations
               }
               color={isRecording ? 'error' : 'default'}
               variant={isRecording ? 'filled' : 'outlined'}
-              sx={{ fontWeight: 600, fontSize: '0.75rem' }}
+              sx={{
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                height: 24,
+                bgcolor: isRecording ? undefined : '#FFFFFF',
+                borderColor: '#CBD5E1',
+              }}
             />
             {playingMessageId && (
               <Chip
                 size="small"
-                icon={<VolumeUpRoundedIcon sx={{ fontSize: 14 }} />}
+                icon={<VolumeUpRoundedIcon sx={{ fontSize: 13 }} />}
                 label={`Playing Audio (TTS) in ${activeLang.name}`}
                 color="primary"
-                sx={{ fontSize: '0.75rem', fontWeight: 600 }}
+                sx={{ fontSize: '0.75rem', fontWeight: 600, height: 24 }}
               />
             )}
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: { xs: 'none', sm: 'inline' } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: { xs: 'none', sm: 'inline' }, whiteSpace: 'nowrap' }}>
               Language updates with top selector:
             </Typography>
             <FormControl size="small">
@@ -570,7 +604,7 @@ Please check with your healthcare provider for specific clinical recommendations
                 onChange={(e) => updatePatient({ preferred_language: e.target.value })}
                 variant="outlined"
                 sx={{
-                  height: 28,
+                  height: 26,
                   fontSize: '0.75rem',
                   borderRadius: 1.5,
                   bgcolor: '#FFFFFF',
@@ -590,7 +624,7 @@ Please check with your healthcare provider for specific clinical recommendations
         </Box>
 
         {/* Input Bar */}
-        <Box sx={{ p: 2, bgcolor: '#FFFFFF', borderTop: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box sx={{ p: 2, bgcolor: '#FFFFFF', borderTop: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
           <Tooltip title={isRecording ? `Stop Voice Recording (${activeLang.name})` : `Voice Input (${activeLang.name} STT)`}>
             <IconButton
               onClick={handleToggleVoice}
