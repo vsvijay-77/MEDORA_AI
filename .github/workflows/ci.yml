@@ -1,0 +1,47 @@
+name: CI
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: backend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements-dev.txt
+      - run: pytest --cov=app --cov-fail-under=90
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: pip install -r backend/requirements.txt
+      - working-directory: frontend
+        run: |
+          npm ci
+          npm test
+          npx playwright install --with-deps chromium
+          npx playwright test
+
+  # Real Sarvam / Gemini / Qdrant smoke tests: manual trigger only, keys from repository secrets.
+  live-smoke:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: backend } }
+    env:
+      RUN_LIVE: "1"
+      SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      QDRANT_URL: ${{ secrets.QDRANT_URL }}
+      QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements-dev.txt
+      - run: pytest tests/live -v
