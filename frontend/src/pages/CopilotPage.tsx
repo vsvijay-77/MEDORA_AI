@@ -44,7 +44,7 @@ import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRound
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded';
 
-import { api } from '../api';
+import { api, hasMedicalKeyword } from '../api';
 import { CopilotMessage } from '../types';
 import { ConfidenceBadge } from '../components/common/ConfidenceBadge';
 import { useAuth } from '../contexts/AuthContext';
@@ -295,15 +295,20 @@ You can also upload a prescription or lab report right here using the **Upload &
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         confidence: res.confidence || 0.94,
         citations: res.citations || [],
+        is_relevance_prompt: (res as any).isRelevancePrompt,
+        suggested_queries: (res as any).suggestedQueries,
       };
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (e) {
+      const isIrrelevant = !query.trim() || !hasMedicalKeyword(query);
       const fallbackMsg: CopilotMessage = {
         id: `ast-${Date.now()}`,
         sender: 'assistant',
-        content: `I received your question: "${query}". Based on your verified medical records:
+        content: isIrrelevant
+          ? `👋 **Hello! I am MEDORA AI, your personal clinical assistant.**\n\nPlease ask relevant health and medical questions related to your prescriptions, lab reports, or medications (e.g. "What medicines should I take in the morning?").`
+          : `I received your question: "${query}". Based on your verified medical records:
 - Lab tests show Hemoglobin 10.1 g/dL (low) and HbA1c 7.1% (high).
-- Prescriptions include Augmentin 625mg after meals.
+- Prescriptions include Metformin 500mg and Atorvastatin 10mg.
 Please check with your healthcare provider for specific clinical recommendations.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         confidence: 0.90,
@@ -433,6 +438,38 @@ Please check with your healthcare provider for specific clinical recommendations
                     <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.65 }}>
                       {msg.content}
                     </Typography>
+
+                    {/* Quick suggested relevant health questions */}
+                    {!isUser && msg.suggested_queries && msg.suggested_queries.length > 0 && (
+                      <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px solid #E2E8F0' }}>
+                        <Typography variant="caption" fontWeight={700} color="primary.main" sx={{ display: 'block', mb: 1 }}>
+                          💡 Tap a relevant question to ask:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                          {msg.suggested_queries.map((sug, i) => (
+                            <Chip
+                              key={i}
+                              label={sug}
+                              size="small"
+                              clickable
+                              onClick={() => handleSend(sug)}
+                              sx={{
+                                bgcolor: '#FFFFFF',
+                                border: '1px solid #CBD5E1',
+                                color: '#1E293B',
+                                fontWeight: 500,
+                                fontSize: '0.75rem',
+                                '&:hover': {
+                                  bgcolor: '#EFF6FF',
+                                  color: 'primary.main',
+                                  borderColor: 'primary.main',
+                                },
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
 
                     {/* Citations section */}
                     {!isUser && msg.citations && msg.citations.length > 0 && (

@@ -42,6 +42,200 @@ const LANGUAGE_DISCLAIMERS: Record<string, { banner: string; disclaimer: string 
   },
 };
 
+export interface RelevanceGuidance {
+  text: string;
+  suggestedQueries: string[];
+}
+
+export const MEDICAL_KEYWORDS = [
+  // Medications & Prescriptions
+  'metformin', 'atorvastatin', 'pantoprazole', 'augmentin', 'paracetamol', 'aspirin',
+  'insulin', 'vitamin', 'antibiotic', 'statin', 'cholecalciferol', 'medicine', 'medicines',
+  'medication', 'medications', 'tablet', 'tablets', 'pill', 'pills', 'dose', 'dosage',
+  'prescription', 'prescriptions', 'prescribe', 'prescribed', 'rx', 'syrup', 'injection',
+  'drug', 'drugs', 'capsule', 'capsules',
+  // Lab tests & Vitals
+  'sugar', 'glucose', 'fasting', 'ppbs', 'hba1c', 'diabetes', 'diabetic',
+  'hemoglobin', 'haemoglobin', 'hb', 'anemia', 'anaemia', 'iron', 'ferritin', 'rbc', 'wbc', 'platelet', 'platelets',
+  'cholesterol', 'lipid', 'lipids', 'ldl', 'hdl', 'triglyceride', 'triglycerides',
+  'blood', 'pressure', 'bp', 'hypertension', 'hypotension', 'pulse', 'heart', 'cardiac', 'ecg', 'ekg',
+  'creatinine', 'urea', 'kidney', 'renal', 'liver', 'ast', 'alt', 'sgot', 'sgpt', 'bilirubin',
+  'tsh', 'thyroid', 't3', 't4', 'urine', 'protein', 'albumin',
+  // Symptoms & Body
+  'pain', 'ache', 'fever', 'cough', 'cold', 'headache', 'chest', 'stomach', 'abdomen',
+  'knee', 'joint', 'fatigue', 'weakness', 'dizzy', 'dizziness', 'nausea', 'vomit', 'swelling',
+  'infection', 'allergy', 'allergies', 'allergic',
+  // Care & Logistics
+  'doctor', 'dr', 'physician', 'hospital', 'clinic', 'lab', 'laboratory', 'test', 'tests',
+  'report', 'reports', 'result', 'results', 'finding', 'findings', 'scan', 'x-ray', 'xray', 'mri', 'ct',
+  'diagnosis', 'checkup', 'discharge', 'admission',
+  // Timings & Instructions
+  'timing', 'schedule', 'timetable', 'time table', 'when should i take', 'how to take',
+  'before food', 'after food', 'empty stomach', 'morning', 'afternoon', 'night', 'bedtime',
+  'side effect', 'side effects', 'precaution', 'precautions', 'contraindication', 'interaction',
+  'food', 'diet', 'water', 'hydration',
+  // Patient & Clinical context
+  'record', 'records', 'medical', 'clinical', 'health', 'patient', 'history', 'summary',
+  // Indic terms
+  'மருந்து', 'மாத்திரை', 'ரத்தம்', 'சர்க்கரை', 'அறிக்கை', 'மருத்துவர்', 'நோய்', 'வலி', 'சாப்பாடு',
+  'தகவல்', 'பரிசோதனை',
+  'दवा', 'गोली', 'खून', 'शर्करा', 'रिपोर्ट', 'डॉक्टर', 'बीमारी', 'दर्द', 'खुराक', 'समय', 'जांच',
+  'మందు', 'రక్త', 'చక్కెర', 'రిపోర్ట్', 'డాక్టర్', 'నొప్పి'
+];
+
+export const hasMedicalKeyword = (text: string): boolean => {
+  const lower = text.toLowerCase();
+  return MEDICAL_KEYWORDS.some((kw) => lower.includes(kw));
+};
+
+export const GREETING_PATTERNS: RegExp[] = [
+  /^(hi|hello|hey|hiya|howdy|hola|yo|sup|namaste|vanakkam|pranam|bonjour|salam)[\s!.,?]*$/i,
+  /^(hi|hello|hey)\s+(there|friend|doc|doctor|bot|assistant|medora)[\s!.,?]*$/i,
+  /^how\s+(are\s+you|r\s+u|do\s+you\s+do|is\s+it\s+going|are\s+things)[\s!.,?]*$/i,
+  /^(hi|hello|hey)[\s,]+how\s+(are\s+you|r\s+u|do\s+you\s+do)[\s!.,?]*$/i,
+  /^who\s+(are\s+you|made\s+you)[\s!.,?]*$/i,
+  /^what\s+(is\s+your\s+name|are\s+you|can\s+you\s+do)[\s!.,?]*$/i,
+  /^what('s|\s+is)\s+up[\s!.,?]*$/i,
+  /^what\s+are\s+you\s+doing[\s!.,?]*$/i,
+  /^good\s+(morning|afternoon|evening|night|day)[\s!.,?]*$/i,
+  /^(tell\s+me\s+a\s+joke|tell\s+a\s+joke|joke|make\s+me\s+laugh)[\s!.,?]*$/i,
+  /^(what('s|\s+is)\s+the\s+weather|weather\s+today|how('s|\s+is)\s+the\s+weather)[\s!.,?]*$/i,
+  /^(sing\s+a\s+song|can\s+you\s+sing|dance|tell\s+a\s+story)[\s!.,?]*$/i,
+  /^(thank\s+you|thanks|thx|ok|okay|bye|goodbye|see\s+you)[\s!.,?]*$/i,
+  /^(test|testing|testing\s+1\s*2\s*3|asdf|hello\s+world)[\s!.,?]*$/i,
+  /^(வணக்கம்|நன்றி|ஹலோ|எப்படி\s+இருக்கிறீர்கள்)[\s!.,?]*$/i,
+  /^(नमस्ते|धन्यवाद|हेलो|आप\s+कैसे\s+हैं)[\s!.,?]*$/i,
+  /^(నమస్కారం|ధన్యవాదాలు|హలో|మీరు\s+ఎలా\s+ఉన్నారు)[\s!.,?]*$/i,
+];
+
+export const isIrrelevantOrGreeting = (text: string): boolean => {
+  const clean = text.trim();
+  if (!clean) return true;
+  if (hasMedicalKeyword(clean)) return false;
+
+  if (GREETING_PATTERNS.some((pattern) => pattern.test(clean))) {
+    return true;
+  }
+
+  const cleanLower = clean.toLowerCase();
+  if (
+    cleanLower.includes('how are you') ||
+    cleanLower.includes('who are you') ||
+    cleanLower.includes('what can you do') ||
+    cleanLower.includes('tell me a joke') ||
+    cleanLower.includes('weather') ||
+    cleanLower.includes('joke') ||
+    cleanLower.includes('sing') ||
+    cleanLower.includes('hello') ||
+    cleanLower.includes('hi ') ||
+    cleanLower.startsWith('hi') ||
+    cleanLower.startsWith('hey')
+  ) {
+    return true;
+  }
+
+  if (clean.length < 50 && !hasMedicalKeyword(clean)) {
+    return true;
+  }
+
+  return false;
+};
+
+export const getRelevanceGuidance = (languageName: string): RelevanceGuidance => {
+  switch (languageName.toLowerCase()) {
+    case 'tamil':
+      return {
+        text: `👋 **வணக்கம்! நான் MEDORA AI, உங்கள் பிரத்யேக மருத்துவ உதவியாளர்.**
+
+தயவுசெய்து உங்கள் உடல்நலம் மற்றும் மருத்துவ பதிவுகள் தொடர்பான **பொருத்தமான கேள்விகளைக் கேளுங்கள்**:
+- 📋 **மருத்துவரின் பரிந்துரைச்சீட்டு (Prescription) & மருந்துகள்** (மாத்திரைகளின் அளவு, உட்கொள்ளும் நேரம்)
+- 🧪 **ஆய்வக அறிக்கைகள் (Lab Reports)** (ரத்த சர்க்கரை, ஹீமோகுளோபின், கொலஸ்ட்ரால்)
+- ⏰ **தினசரி மருந்து அட்டவணை** (எந்த நேரத்தில் என்ன மாத்திரை சாப்பிட வேண்டும்)
+- ⚠️ **மருந்து பக்கவிளைவுகள் மற்றும் பாதுகாப்பு முன்னெச்சரிக்கைகள்**
+
+### 💡 நீங்கள் கேட்கக்கூடிய மாதிரி கேள்விகள்:
+1. *"நான் காலையிலும் இரவிலும் என்ன மருந்துகளை உட்கொள்ள வேண்டும்?"*
+2. *"எனது சமீபத்திய பரிசோதனையில் ரத்த சர்க்கரை (Fasting Sugar) அளவு என்ன?"*
+3. *"எனது ஹீமோகுளோபின் ஏன் குறைவாக உள்ளது?"*
+4. *"மெட்ஃபோர்மின் (Metformin) மருந்துக்கான உணவு வழிகாட்டுதல்கள் என்ன?"*`,
+        suggestedQueries: [
+          'நான் காலையிலும் இரவிலும் என்ன மருந்துகளை உட்கொள்ள வேண்டும்?',
+          'எனது சமீபத்திய ரத்த சர்க்கரை அளவு என்ன?',
+          'எனது மருந்து நேர அட்டவணை',
+          'மெட்ஃபோர்மின் மாத்திரை எப்படி சாப்பிட வேண்டும்?',
+        ],
+      };
+
+    case 'hindi':
+      return {
+        text: `👋 **नमस्ते! मैं MEDORA AI, आपका समर्पित नैदानिक (Clinical) सहायक हूँ।**
+
+कृपया अपने स्वास्थ्य, पर्चे या मेडिकल रिकॉर्ड से संबंधित **प्रासंगिक प्रश्न पूछें**:
+- 📋 **डॉक्टर का पर्चा (Prescription) और दवाएं** (खुराक, समय और भोजन निर्देश)
+- 🧪 **लैब और परीक्षण रिपोर्ट** (फास्टिंग ब्लड शुगर, हीमोग्लोबिन, कोलेस्ट्रॉल आदि)
+- ⏰ **दवा समय सारिणी (Timetable)** (किस समय कौन सी दवा लेनी है)
+- ⚠️ **दवाओं के दुष्प्रभाव और सावधानियां**
+
+### 💡 आप इस प्रकार के प्रश्न पूछ सकते हैं:
+1. *"मुझे सुबह और रात में कौन सी दवाएं लेनी चाहिए?"*
+2. *"मेरी नवीनतम रिपोर्ट में फास्टिंग ब्लड शुगर कितना है?"*
+3. *"मेरा हीमोग्लोबिन कम क्यों है?"*
+4. *"मेटफॉर्मिन लेने के क्या नियम और सावधानियां हैं?"*`,
+        suggestedQueries: [
+          'मुझे सुबह और रात में कौन सी दवाएं लेनी चाहिए?',
+          'मेरी रिपोर्ट में फास्टिंग ब्लड शुगर कितना है?',
+          'दवाइयों की दैनिक समय सारिणी दिखाएं',
+          'मेटफॉर्मिन लेने के क्या नियम हैं?',
+        ],
+      };
+
+    case 'telugu':
+      return {
+        text: `👋 **నమస్కారం! నేను MEDORA AI, మీ వ్యక్తిగత ఆరోగ్య సహాయకుడిని.**
+
+దయచేసి మీ ఆరోగ్య రికార్డులకు సంబంధించిన **సంబంధిత వైద్య ప్రశ్నలను అడగండి**:
+- 📋 **ప్రిస్క్రిప్షన్లు & మందులు** (మోతాదులు, సమయాలు, ఆహార నియమాలు)
+- 🧪 **ల్యాబ్ నివేదికలు** (బ్లడ్ షుగర్, హిమోగ్లోబిన్, కొలెస్ట్రాల్)
+- ⏰ **రోజువారీ మందుల సమయ పట్టిక (Timetable)**
+- ⚠️ **దుష్ప్రభావాలు & జాగ్రత్తలు**
+
+### 💡 మీరు అడగగల ప్రశ్నలు:
+1. *"నేను ఉదయం మరియు రాత్రి ఏ మందులు తీసుకోవాలి?"*
+2. *"నా తాజా నివేదికలో ఫాస్టింగ్ బ్లడ్ షుగర్ ఎంత ఉంది?"*
+3. *"నా రోజువారీ మందుల సమయ పట్టికను వివరించండి."*`,
+        suggestedQueries: [
+          'నేను ఉదయం మరియు రాత్రి ఏ మందులు తీసుకోవాలి?',
+          'నా తాజా నివేదికలో ఫాస్టింగ్ బ్లడ్ షుగర్ ఎంత ఉంది?',
+          'నా రోజువారీ మందుల సమయ పట్టికను వివరించండి',
+        ],
+      };
+
+    default:
+      return {
+        text: `👋 **Hello! I am MEDORA AI, your dedicated personal clinical assistant.**
+
+Please ask **relevant health and medical questions** related to your:
+- 📋 **Prescriptions & Medications** (e.g., doses, frequency, food instructions)
+- 🧪 **Lab & Diagnostic Reports** (e.g., fasting blood sugar, HbA1c, hemoglobin, lipid panel)
+- ⏰ **Daily Medication Schedule** (what time to take which tablet)
+- ⚠️ **Side Effects & Drug Precautions**
+
+### 💡 Example relevant questions you can ask:
+1. *"What medicines do I need to take in the morning and at night?"*
+2. *"What was my fasting blood sugar level in the latest report?"*
+3. *"Why was my hemoglobin flagged low?"*
+4. *"Explain my daily medication timetable and food instructions."*
+5. *"Are there any side effects or precautions for Metformin or Atorvastatin?"*`,
+        suggestedQueries: [
+          'What medicines do I take in the morning and at night?',
+          'What was my fasting blood sugar level in the latest report?',
+          'Show my daily medication timetable and timings',
+          'What are Metformin side effects and food rules?',
+        ],
+      };
+  }
+};
+
 export const api = {
   // Workspace & Overview
   getWorkspace: async (): Promise<WorkspaceOverview> => {
@@ -261,6 +455,18 @@ export const api = {
         ? patientId
         : 'b70db8e8-211c-461f-991b-6b944193435b';
 
+    // 0. Intercept conversational / greeting / irrelevant queries with localized guidance
+    if (isIrrelevantOrGreeting(question)) {
+      const guidance = getRelevanceGuidance(langObj.name);
+      return {
+        answer: `${langMeta.banner}\n\n${guidance.text}\n\n> 💡 *${langMeta.disclaimer}*`,
+        confidence: 0.99,
+        citations: [],
+        isRelevancePrompt: true,
+        suggestedQueries: guidance.suggestedQueries,
+      };
+    }
+
     // 1. Send user's question directly to backend API (Qdrant RAG)
     if (!isTest) {
       try {
@@ -270,18 +476,26 @@ export const api = {
         });
 
         if (res.data && res.data.answer && !res.data.insufficient_evidence) {
+          const isRelevance =
+            res.data.guard_notes?.includes('query_classified_as_conversational_or_irrelevant') ||
+            isIrrelevantOrGreeting(question);
+          const guidance = isRelevance ? getRelevanceGuidance(langObj.name) : null;
           return {
             answer: `${langMeta.banner}\n\n${res.data.answer}\n\n> 💡 *${langMeta.disclaimer}*`,
             confidence: 0.95,
-            citations: (res.data.citations || []).map((c: any) => ({
-              document_id: c.document_id || c.record_id,
-              document_name: c.text?.includes('report')
-                ? 'Lab Report'
-                : c.text?.includes('Medication')
-                ? 'Prescription Record'
-                : 'Medical Record',
-              snippet: c.text,
-            })),
+            citations: isRelevance
+              ? []
+              : (res.data.citations || []).map((c: any) => ({
+                  document_id: c.document_id || c.record_id,
+                  document_name: c.text?.includes('report')
+                    ? 'Lab Report'
+                    : c.text?.includes('Medication')
+                    ? 'Prescription Record'
+                    : 'Medical Record',
+                  snippet: c.text,
+                })),
+            isRelevancePrompt: isRelevance,
+            suggestedQueries: guidance?.suggestedQueries,
           };
         }
       } catch (e) {
@@ -533,7 +747,19 @@ export const api = {
       };
     }
 
-    // General Summary for broader queries
+    // If query lacks medical keywords, return relevance guidance
+    if (!hasMedicalKeyword(question)) {
+      const guidance = getRelevanceGuidance(langObj.name);
+      return {
+        answer: `${langMeta.banner}\n\n${guidance.text}\n\n> 💡 *${langMeta.disclaimer}*`,
+        confidence: 0.99,
+        citations: [],
+        isRelevancePrompt: true,
+        suggestedQueries: guidance.suggestedQueries,
+      };
+    }
+
+    // General Summary for broader clinical queries
     return {
       answer: `${langMeta.banner}
 

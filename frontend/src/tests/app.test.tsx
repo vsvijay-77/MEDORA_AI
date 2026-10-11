@@ -14,7 +14,7 @@ import { MetricCard } from '../components/common/MetricCard';
 import { StatusChip } from '../components/common/StatusChip';
 import { TimelinePage, TABLET_SCHEDULE_DATA } from '../pages/TimelinePage';
 import { ALL_LANGUAGES, getSpeechLanguageCode, getLanguageOption } from '../types/languages';
-import { api } from '../api';
+import { api, isIrrelevantOrGreeting, hasMedicalKeyword } from '../api';
 import FolderSharedRoundedIcon from '@mui/icons-material/FolderSharedRounded';
 
 const renderWithProviders = (ui: React.ReactElement) => {
@@ -146,5 +146,41 @@ describe('MEDORA AI Frontend Core Components', () => {
     const hindiOpt = getLanguageOption('Hindi');
     expect(hindiOpt.nativeName).toBe('हिंदी');
     expect(hindiOpt.code).toBe('hi-IN');
+  });
+
+  it('detects irrelevant queries like "hi how are you" and guides user to ask relevant health questions', async () => {
+    // 1. Direct test of query classifier
+    expect(isIrrelevantOrGreeting('hi')).toBe(true);
+    expect(isIrrelevantOrGreeting('hello')).toBe(true);
+    expect(isIrrelevantOrGreeting('hi how are you')).toBe(true);
+    expect(isIrrelevantOrGreeting('how are you')).toBe(true);
+    expect(isIrrelevantOrGreeting('tell me a joke')).toBe(true);
+    expect(isIrrelevantOrGreeting('what is the weather today?')).toBe(true);
+
+    // Clinical queries must not be irrelevant
+    expect(isIrrelevantOrGreeting('What is Metformin?')).toBe(false);
+    expect(isIrrelevantOrGreeting('Explain my fasting blood sugar')).toBe(false);
+    expect(isIrrelevantOrGreeting('Hi, what medicines should I take?')).toBe(false);
+    expect(hasMedicalKeyword('medicine')).toBe(true);
+
+    // 2. Copilot response for irrelevant queries displays relevance guidance
+    const resGreeting = await api.askCopilot('test-patient', 'hi how are you');
+    expect(resGreeting.answer).toContain('MEDORA AI');
+    expect(resGreeting.answer).toContain('relevant health and medical questions');
+    expect(resGreeting.isRelevancePrompt).toBe(true);
+    expect(resGreeting.suggestedQueries).toBeDefined();
+    expect(resGreeting.suggestedQueries!.length).toBeGreaterThan(0);
+
+    // In Tamil
+    const resTamil = await api.askCopilot('test-patient', 'வணக்கம் எப்படி இருக்கிறீர்கள்', [], 'Tamil');
+    expect(resTamil.answer).toContain('MEDORA AI');
+    expect(resTamil.answer).toContain('பொருத்தமான கேள்விகளைக் கேளுங்கள்');
+    expect(resTamil.isRelevancePrompt).toBe(true);
+
+    // In Hindi
+    const resHindi = await api.askCopilot('test-patient', 'नमस्ते आप कैसे हैं', [], 'Hindi');
+    expect(resHindi.answer).toContain('MEDORA AI');
+    expect(resHindi.answer).toContain('प्रासंगिक प्रश्न पूछें');
+    expect(resHindi.isRelevancePrompt).toBe(true);
   });
 });

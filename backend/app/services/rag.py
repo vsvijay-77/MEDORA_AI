@@ -129,6 +129,116 @@ def _fallback(contexts: list[Context], language: str, notes: list[str]) -> Groun
                           grounded=True, insufficient_evidence=False, language=language, guard_notes=notes)
 
 
+RELEVANCE_GUIDANCE: dict[str, str] = {
+    "en-IN": (
+        "👋 Hello! I am MEDORA AI, your dedicated personal clinical assistant.\n\n"
+        "Please ask relevant health and medical questions related to your:\n"
+        "- 📋 Prescriptions & Medications (doses, timings, food instructions)\n"
+        "- 🧪 Lab & Diagnostic Reports (fasting blood sugar, HbA1c, hemoglobin, cholesterol)\n"
+        "- ⏰ Daily Medication Schedule (what time to take which tablet)\n"
+        "- ⚠️ Side Effects & Drug Precautions\n\n"
+        "Example questions you can ask:\n"
+        "1. What medicines do I need to take in the morning and night?\n"
+        "2. What was my fasting blood sugar level in the latest report?\n"
+        "3. Explain my daily medication timetable and food instructions.\n"
+        "4. Are there any side effects for Metformin or Atorvastatin?"
+    ),
+    "ta-IN": (
+        "👋 வணக்கம்! நான் MEDORA AI, உங்கள் பிரத்யேக மருத்துவ உதவியாளர்.\n\n"
+        "தயவுசெய்து உங்கள் உடல்நலம் மற்றும் மருத்துவ பதிவுகள் தொடர்பான பொருத்தமான கேள்விகளைக் கேளுங்கள்:\n"
+        "- 📋 மருத்துவர் பரிந்துரைச்சீட்டு (Prescription) & மருந்துகள்\n"
+        "- 🧪 ஆய்வக அறிக்கைகள் (ரத்த சர்க்கரை, ஹீமோகுளோபின், கொலஸ்ட்ரால்)\n"
+        "- ⏰ தினசரி மருந்து அட்டவணை (எந்த நேரத்தில் என்ன மாத்திரை சாப்பிட வேண்டும்)\n"
+        "- ⚠️ மருந்து பக்கவிளைவுகள் மற்றும் பாதுகாப்பு முன்னெச்சரிக்கைகள்\n\n"
+        "மாதிரி கேள்விகள்:\n"
+        "1. நான் காலையிலும் இரவிலும் என்ன மருந்துகளை உட்கொள்ள வேண்டும்?\n"
+        "2. எனது சமீபத்திய அறிக்கையில் ரத்த சர்க்கரை அளவு என்ன?"
+    ),
+    "hi-IN": (
+        "👋 नमस्ते! मैं MEDORA AI, आपका समर्पित नैदानिक (Clinical) सहायक हूँ।\n\n"
+        "कृपया अपने स्वास्थ्य और मेडिकल रिकॉर्ड से संबंधित प्रासंगिक प्रश्न पूछें:\n"
+        "- 📋 डॉक्टर का पर्चा (Prescription) और दवाएं (खुराक, समय और निर्देश)\n"
+        "- 🧪 लैब और परीक्षण रिपोर्ट (ब्लड शुगर, हीमोग्लोबिन, कोलेस्ट्रॉल आदि)\n"
+        "- ⏰ दवा समय सारिणी (Timetable)\n"
+        "- ⚠️ दवाओं के दुष्प्रभाव और सावधानियां\n\n"
+        "उदाहरण प्रश्न:\n"
+        "1. मुझे सुबह और रात में कौन सी दवाएं लेनी चाहिए?\n"
+        "2. मेरी नवीनतम रिपोर्ट में फास्टिंग ब्लड शुगर कितना है?"
+    ),
+    "te-IN": (
+        "👋 నమస్కారం! నేను MEDORA AI, మీ వ్యక్తిగత ఆరోగ్య క్లినికల్ సహాయకుడిని.\n\n"
+        "దయచేసి మీ ఆరోగ్య రికార్డులకు సంబంధించిన సంబంధిత వైద్య ప్రశ్నలను అడగండి:\n"
+        "- 📋 ప్రిస్క్రిప్షన్లు & మందులు (మోతాదులు, సమయాలు, ఆహార నియమాలు)\n"
+        "- 🧪 ల్యాబ్ నివేదికలు (బ్లడ్ షుగర్, హిమోగ్లోబిన్, కొలెస్ట్రాల్)\n"
+        "- ⏰ రోజువారీ మందుల సమయ పట్టిక (Timetable)\n\n"
+        "ఉదాహరణ ప్రశ్నలు:\n"
+        "1. నేను ఉదయం మరియు రాత్రి ఏ మందులు తీసుకోవాలి?\n"
+        "2. నా తాజా నివేదికలో ఫాస్టింగ్ బ్లడ్ షుగర్ ఎంత ఉంది?"
+    ),
+}
+
+MEDICAL_KEYWORDS = {
+    "metformin", "atorvastatin", "pantoprazole", "augmentin", "paracetamol", "aspirin",
+    "insulin", "vitamin", "antibiotic", "statin", "cholecalciferol", "medicine", "medicines",
+    "medication", "medications", "tablet", "tablets", "pill", "pills", "dose", "dosage",
+    "prescription", "prescriptions", "prescribe", "prescribed", "rx", "syrup", "injection",
+    "drug", "drugs", "capsule", "capsules", "sugar", "glucose", "fasting", "ppbs", "hba1c",
+    "diabetes", "diabetic", "hemoglobin", "haemoglobin", "hb", "anemia", "iron", "ferritin",
+    "cholesterol", "lipid", "lipids", "ldl", "hdl", "triglyceride", "blood", "pressure", "bp",
+    "hypertension", "heart", "cardiac", "ecg", "creatinine", "urea", "kidney", "renal", "liver",
+    "thyroid", "tsh", "urine", "pain", "ache", "fever", "cough", "headache", "chest", "stomach",
+    "knee", "doctor", "hospital", "clinic", "lab", "test", "tests", "report", "reports", "result",
+    "results", "scan", "xray", "x-ray", "mri", "timing", "schedule", "timetable", "food", "diet",
+    "side effect", "precaution", "record", "records", "health", "clinical", "patient", "summary",
+    "மருந்து", "மாத்திரை", "ரத்தம்", "சர்க்கரை", "அறிக்கை", "மருத்துவர்", "வலி",
+    "दवा", "गोली", "खून", "शर्करा", "रिपोर्ट", "डॉक्टर", "दर्द", "मందు"
+}
+
+GREETING_PATTERNS = [
+    re.compile(r"^(?:hi|hello|hey|hiya|howdy|hola|yo|sup|namaste|vanakkam|pranam|bonjour|salam)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^(?:hi|hello|hey)\s+(?:there|friend|doc|doctor|bot|assistant|medora)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^how\s+(?:are\s+you|r\s+u|do\s+you\s+do|is\s+it\s+going|are\s+things)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^(?:hi|hello|hey)[\s,]+how\s+(?:are\s+you|r\s+u|do\s+you\s+do)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^who\s+(?:are\s+you|made\s+you)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^what\s+(?:is\s+your\s+name|are\s+you|can\s+you\s+do)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^what(?:'s|\s+is)\s+up[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^what\s+are\s+you\s+doing[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^good\s+(?:morning|afternoon|evening|night|day)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^(?:tell\s+me\s+a\s+joke|tell\s+a\s+joke|joke|make\s+me\s+laugh)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^(?:what(?:'s|\s+is)\s+the\s+weather|weather\s+today|how(?:'s|\s+is)\s+the\s+weather)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^(?:sing\s+a\s+song|can\s+you\s+sing|dance|tell\s+a\s+story)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^(?:thank\s+you|thanks|thx|ok|okay|bye|goodbye|see\s+you)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^(?:test|testing|testing\s+1\s*2\s*3|asdf|hello\s+world)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^(?:வணக்கம்|நன்றி|ஹலோ|எப்படி\s+இருக்கிறீர்கள்)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^(?:नमस्ते|धन्यवाद|हेलो|आप\s+कैसे\s+हैं)[\s!.,?]*$", re.IGNORECASE),
+    re.compile(r"^(?:నమస్కారం|ధన్యవాదాలు|హలో|మీరు\s+ఎలా\s+ఉన్నారు)[\s!.,?]*$", re.IGNORECASE),
+]
+
+
+def has_medical_keyword(question: str) -> bool:
+    q_low = question.lower()
+    return any(kw in q_low for kw in MEDICAL_KEYWORDS)
+
+
+def is_irrelevant_or_greeting(question: str) -> bool:
+    clean = question.strip()
+    if not clean:
+        return True
+    if has_medical_keyword(clean):
+        return False
+    if any(p.match(clean) for p in GREETING_PATTERNS):
+        return True
+    clean_low = clean.lower()
+    if any(phrase in clean_low for phrase in [
+        "how are you", "who are you", "what can you do", "tell me a joke",
+        "weather", "joke", "sing", "hello", "hi there"
+    ]):
+        return True
+    if len(clean) < 50 and not has_medical_keyword(clean):
+        return True
+    return False
+
+
 class RagService:
     def __init__(self, gemini, vectors, settings):
         self.gemini = gemini
@@ -144,6 +254,16 @@ class RagService:
 
     def answer(self, db: Session, patient_id: str, question: str, language: str = "en-IN") -> GroundedAnswer:
         question = question.strip()[:1000]
+        if is_irrelevant_or_greeting(question):
+            guidance_text = RELEVANCE_GUIDANCE.get(language, RELEVANCE_GUIDANCE["en-IN"])
+            return GroundedAnswer(
+                text=guidance_text,
+                citations=[],
+                grounded=True,
+                insufficient_evidence=False,
+                language=language,
+                guard_notes=["query_classified_as_conversational_or_irrelevant"],
+            )
         hits = []
         try:
             hits = self.retrieve(patient_id, question)

@@ -177,6 +177,18 @@ class TestRag:
         services.rag.answer(db, patient.id, "hemoglobin kitna tha?", language="hi-IN")
         assert "Write the answer in Hindi" in services.gemini.prompts[0][0]
 
+    def test_greeting_or_irrelevant_query_returns_relevance_guidance(self, db, services, patient, ingest):
+        ingest(LAB_REPORT_1)
+        a = services.rag.answer(db, patient.id, "hi how are you")
+        assert "MEDORA AI" in a.text
+        assert "Please ask relevant health and medical questions" in a.text
+        assert a.citations == []
+        assert "query_classified_as_conversational_or_irrelevant" in a.guard_notes
+
+        a_ta = services.rag.answer(db, patient.id, "hello", language="ta-IN")
+        assert "MEDORA AI" in a_ta.text
+        assert "பொருத்தமான கேள்விகளைக் கேளுங்கள்" in a_ta.text
+
     def test_summary_uses_latest_values(self, db, services, patient, ingest):
         ingest(LAB_REPORT_1)
         ingest(LAB_REPORT_2)

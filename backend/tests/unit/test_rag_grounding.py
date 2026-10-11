@@ -54,3 +54,24 @@ def test_citation_labels_not_counted_as_numbers():
 
 def test_strip_citations_for_speech():
     assert strip_citations("Hemoglobin 10.2 [R1]. Metformin [R2][R3].") == "Hemoglobin 10.2. Metformin."
+
+
+def test_irrelevant_and_greeting_classification():
+    from app.services.rag import is_irrelevant_or_greeting
+
+    # Greetings & casual queries should be flagged as irrelevant
+    assert is_irrelevant_or_greeting("hi") is True
+    assert is_irrelevant_or_greeting("hello") is True
+    assert is_irrelevant_or_greeting("hi how are you") is True
+    assert is_irrelevant_or_greeting("how are you") is True
+    assert is_irrelevant_or_greeting("tell me a joke") is True
+    assert is_irrelevant_or_greeting("what is the weather today?") is True
+    assert is_irrelevant_or_greeting("good morning") is True
+
+    # Medical & clinical queries must NOT be flagged as irrelevant
+    assert is_irrelevant_or_greeting("What is Metformin used for?") is False
+    assert is_irrelevant_or_greeting("Why is my hemoglobin low in the lab report?") is False
+    assert is_irrelevant_or_greeting("What is my fasting blood sugar level?") is False
+    assert is_irrelevant_or_greeting("Hi, what medicines should I take in the morning?") is False
+    assert is_irrelevant_or_greeting("Hello doctor, explain my prescription") is False
+

@@ -79,6 +79,8 @@ export interface CopilotMessage {
   confidence?: number;
   audio_url?: string;
   is_voice_query?: boolean;
+  is_relevance_prompt?: boolean;
+  suggested_queries?: string[];
 }
 
 export interface WorkspaceOverview {
